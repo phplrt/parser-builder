@@ -13,9 +13,9 @@ use Phplrt\Parser\Grammar\RuleInterface;
 use Phplrt\Parser\Grammar\SequenceInterface;
 
 /**
- * Describes the rules that must be present in the resulting tree.
+ * Describes the rules that are kept in the resulting tree.
  */
-final readonly class TreePresenceConstructionParserAnalysisPass implements
+final readonly class KeptRuleConstructionParserAnalysisPass implements
     ParserAnalysisPassInterface
 {
     public function process(ParserResultContext $context): void
@@ -59,7 +59,7 @@ final readonly class TreePresenceConstructionParserAnalysisPass implements
             $result[$rule] = false;
         }
 
-        $context->presentInTree = $result;
+        $context->kept = $result;
     }
 
     /**
@@ -94,11 +94,11 @@ final readonly class TreePresenceConstructionParserAnalysisPass implements
      * Returns the rules that will see the value of the given one.
      *
      * @param array<int, list<int>> $parents
-     * @param array<int, bool> $presentInTree
+     * @param array<int, bool> $kept
      * @param array<int, true> $visited
      * @return list<int>
      */
-    private function findObservers(int $rule, int $initial, array $parents, array $presentInTree, array $visited): array
+    private function findObservers(int $rule, int $initial, array $parents, array $kept, array $visited): array
     {
         if (isset($visited[$rule])) {
             return [];
@@ -112,14 +112,14 @@ final readonly class TreePresenceConstructionParserAnalysisPass implements
              * The value of the initial rule is the result of the analysis, so
              * there is nothing above it to join the value with.
              */
-            if ($presentInTree[$parent] || $parent === $initial) {
+            if ($kept[$parent] || $parent === $initial) {
                 $result[] = $parent;
 
                 continue;
             }
 
             // A rule missing from the tree passes the value to its own observers
-            foreach ($this->findObservers($parent, $initial, $parents, $presentInTree, $visited) as $observer) {
+            foreach ($this->findObservers($parent, $initial, $parents, $kept, $visited) as $observer) {
                 $result[] = $observer;
             }
         }

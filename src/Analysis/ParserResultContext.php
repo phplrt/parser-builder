@@ -41,24 +41,25 @@ final class ParserResultContext
         public readonly array $constants = [],
         /**
          * The identifiers of the tokens a rule may begin with, indexed by the
-         * rule identifiers.
+         * rule identifiers, or {@see null} for a rule that may begin with any
+         * token at all.
          *
-         * @var array<int, array<int, true>>
+         * @var array<int, array<int, true>|null>
          */
-        public array $startTokens = [],
+        public array $lookahead = [],
         /**
-         * The rules that may be recognized without consuming a token, indexed
-         * by the rule identifiers.
+         * The rules that are kept in the resulting tree, indexed by the rule
+         * identifiers.
          *
          * @var array<int, bool>
          */
-        public array $matchesEmptyInput = [],
+        public array $kept = [],
         /**
-         * The rules that are present in the resulting tree, indexed by the
-         * rule identifiers.
+         * The alternatives of every alternation worth trying, indexed by the
+         * token the reading is at and then by the rule identifiers.
          *
-         * @var array<int, bool>
+         * @var array<int, array<int, list<int>>>
          */
-        public array $presentInTree = [],
+        public array $choicePrediction = [],
     ) {}
 }

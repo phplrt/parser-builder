@@ -35,25 +35,19 @@ final readonly class ParserBuilderResult
         public int $initial,
         /**
          * The identifiers of the tokens a rule may begin with, indexed by the
-         * rule identifiers.
+         * rule identifiers, or {@see null} for a rule that may begin with any
+         * token at all.
          *
-         * @var array<int, array<int, true>>
+         * @var array<int, array<int, true>|null>
          */
-        public array $startTokens,
+        public array $lookahead,
         /**
-         * The rules that may be recognized without consuming a token, indexed
-         * by the rule identifiers.
-         *
-         * @var array<int, bool>
-         */
-        public array $matchesEmptyInput,
-        /**
-         * The rules that are present in the resulting tree, indexed by the rule
+         * The rules that are kept in the resulting tree, indexed by the rule
          * identifiers.
          *
          * @var array<int, bool>
          */
-        public array $presentInTree,
+        public array $kept,
         /**
          * The reducers converting the rules into the nodes, indexed by the
          * rule identifiers.
@@ -67,6 +61,13 @@ final readonly class ParserBuilderResult
          * @var array<non-empty-string, int>
          */
         public array $constants = [],
+        /**
+         * The alternatives of every alternation worth trying, indexed by the
+         * token the reading is at and then by the rule identifiers.
+         *
+         * @var array<int, array<int, list<int>>>
+         */
+        public array $choicePrediction = [],
     ) {}
 
     /**

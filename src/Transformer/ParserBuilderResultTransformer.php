@@ -18,11 +18,11 @@ final readonly class ParserBuilderResultTransformer
         return new ParserBuilderResult(
             grammar: $context->grammar,
             initial: $context->initial,
-            startTokens: $context->startTokens,
-            matchesEmptyInput: $context->matchesEmptyInput,
-            presentInTree: $context->presentInTree,
+            lookahead: $context->lookahead,
+            kept: $context->kept,
             reducers: $context->reducers,
             constants: $context->constants,
+            choicePrediction: $context->choicePrediction,
         );
     }
 }

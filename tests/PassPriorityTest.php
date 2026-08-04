@@ -5,7 +5,8 @@ declare(strict_types=1);
 namespace Phplrt\Parser\Builder\Tests;
 
 use Phplrt\Lexer\Builder\LexerBuilderResult;
-use Phplrt\Parser\Builder\Analysis\TreePresenceConstructionParserAnalysisPass;
+use Phplrt\Parser\Builder\Analysis\ChoicePredictionConstructionParserAnalysisPass;
+use Phplrt\Parser\Builder\Analysis\KeptRuleConstructionParserAnalysisPass;
 use Phplrt\Parser\Builder\Analysis\LookaheadConstructionParserAnalysisPass;
 use Phplrt\Parser\Builder\Analysis\ParserAnalysisPassInterface;
 use Phplrt\Parser\Builder\Analysis\ParserResultContext;
@@ -122,7 +123,8 @@ final class PassPriorityTest extends TestCase
 
         self::assertSame([
             LookaheadConstructionParserAnalysisPass::class,
-            TreePresenceConstructionParserAnalysisPass::class,
+            KeptRuleConstructionParserAnalysisPass::class,
+            ChoicePredictionConstructionParserAnalysisPass::class,
         ], \array_map(
             static fn(ParserAnalysisPassInterface $pass): string => $pass::class,
             $parser->analysisPasses,
