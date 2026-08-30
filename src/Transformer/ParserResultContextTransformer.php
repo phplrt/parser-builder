@@ -59,6 +59,7 @@ final readonly class ParserResultContextTransformer
         $grammar = [];
         $reducers = [];
         $constants = [];
+        $messages = [];
 
         foreach ($context->rules as $id => $definition) {
             $grammar[] = $this->createRule($definition, $identifiers, $lexer);
@@ -67,8 +68,17 @@ final readonly class ParserResultContextTransformer
                 $reducers[$id] = $definition->reducer;
             }
 
+            if ($definition->message !== null) {
+                $messages[$id] = $definition->message;
+            }
+
             if ($definition->name !== null) {
                 $constants[$definition->name] = $id;
+
+                $context->logger->debug('Rule {rule} is compiled into the rule #{id}', [
+                    'rule' => $definition->name,
+                    'id' => $id,
+                ]);
             }
         }
 
@@ -78,6 +88,8 @@ final readonly class ParserResultContextTransformer
             reducers: $reducers,
             constants: $constants,
             expectations: $this->createExpectations($lexer),
+            messages: $messages,
+            logger: $context->logger,
         );
     }
 

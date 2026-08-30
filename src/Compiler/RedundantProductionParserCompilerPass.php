@@ -35,6 +35,11 @@ final readonly class RedundantProductionParserCompilerPass implements
                     continue;
                 }
 
+                $context->logger->info('Rule {rule} is replaced by {child}, since it recognizes the very same input', [
+                    'rule' => (string) $rule,
+                    'child' => $child->printReference(),
+                ]);
+
                 $replacements->replace($rule, $child);
             }
 
@@ -54,6 +59,12 @@ final readonly class RedundantProductionParserCompilerPass implements
         // A rule with a reducer builds a node of its own, so it may not be
         // removed
         if ($rule->reducer !== null) {
+            return null;
+        }
+
+        // A rule with a message of its own reports the error the rule it
+        // refers to says nothing about, so it may not be removed either
+        if ($rule->message !== null) {
             return null;
         }
 

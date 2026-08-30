@@ -6,6 +6,8 @@ namespace Phplrt\Parser\Builder\Analysis;
 
 use Phplrt\Parser\Builder\Definition\Reducer\ReducerInterface;
 use Phplrt\Parser\Grammar\RuleInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
 /**
  * Describes the grammar the analysis passes complement with the metadata.
@@ -55,6 +57,13 @@ final class ParserResultContext
          */
         public array $expectations = [],
         /**
+         * A map of rule ID and the message reported in case of the rule cannot
+         * be recognized.
+         *
+         * @var array<int, non-empty-string>
+         */
+        public array $messages = [],
+        /**
          * The rules that are kept in the resulting tree, indexed by the rule
          * identifiers.
          *
@@ -68,5 +77,9 @@ final class ParserResultContext
          * @var array<int, array<int, list<int>>>
          */
         public array $choicePrediction = [],
+        /**
+         * Reports what the passes have found out about the grammar.
+         */
+        public readonly LoggerInterface $logger = new NullLogger(),
     ) {}
 }

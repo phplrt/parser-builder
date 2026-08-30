@@ -52,6 +52,10 @@ final readonly class DuplicateRuleParserCompilerPass implements
                     continue;
                 }
 
+                $context->logger->info('Rule {rule} is merged with the equal one declared before it', [
+                    'rule' => (string) $rule,
+                ]);
+
                 $replacements->replace($rule, $original);
             }
 
@@ -70,6 +74,12 @@ final readonly class DuplicateRuleParserCompilerPass implements
         // A rule with a reducer builds a node of its own, so it may not be
         // merged
         if ($rule->reducer !== null) {
+            return null;
+        }
+
+        // A rule with a message of its own reports a different error from the
+        // one recognizing the very same input, so it may not be merged either
+        if ($rule->message !== null) {
             return null;
         }
 

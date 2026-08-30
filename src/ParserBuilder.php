@@ -25,6 +25,7 @@ use Phplrt\Parser\Builder\Compiler\RuleNameDuplicationParserCompilerPass;
 use Phplrt\Parser\Builder\Compiler\RuleReferenceResolutionParserCompilerPass;
 use Phplrt\Parser\Builder\Compiler\TokenReferenceValidationParserCompilerPass;
 use Phplrt\Parser\Builder\Compiler\UnreachableRuleParserCompilerPass;
+use Phplrt\Parser\Builder\Compiler\UnreportableMessageParserCompilerPass;
 use Phplrt\Parser\Builder\Definition\AlternationRuleDefinition;
 use Phplrt\Parser\Builder\Definition\ConcatenationRuleDefinition;
 use Phplrt\Parser\Builder\Definition\OptionalRuleDefinition;
@@ -40,8 +41,11 @@ use Phplrt\Parser\Builder\Exception\ParserCompilerException;
 use Phplrt\Parser\Builder\Transformer\ParserBuilderResultTransformer;
 use Phplrt\Parser\Builder\Transformer\ParserBuildingContextTransformer;
 use Phplrt\Parser\Builder\Transformer\ParserResultContextTransformer;
+use Psr\Log\LoggerAwareInterface;
+use Psr\Log\LoggerInterface;
+use Psr\Log\NullLogger;
 
-final class ParserBuilder
+final class ParserBuilder implements LoggerAwareInterface
 {
     /**
      * Brings the grammar to the form the rest of the passes expect: the
@@ -99,8 +103,15 @@ final class ParserBuilder
      */
     public private(set) array $analysisPasses = [];
 
+    /**
+     * Reports what the passes do to the grammar while the parser is built.
+     */
+    public private(set) LoggerInterface $logger;
+
     public function __construct()
     {
+        $this->logger = new NullLogger();
+
         $this->compilerPasses = [
             self::PASS_PRIORITY_NORMALIZE => [
                 /**
@@ -135,6 +146,13 @@ final class ParserBuilder
                  */
                 new DuplicateRuleParserCompilerPass(),
                 new RepeatedAlternativeParserCompilerPass(),
+            ],
+            self::PASS_PRIORITY_CHECK_AFTER_OPTIMIZE => [
+                /**
+                 * Where a message may be reported from is decided by the shape
+                 * of the grammar, which the rewrites above are free to change.
+                 */
+                new UnreportableMessageParserCompilerPass(),
             ],
         ];
 
@@ -413,10 +431,25 @@ final class ParserBuilder
     }
 
     /**
+     * Registers the logger the passes report to.
+     *
+     * @api
+     */
+    #[\Override]
+    public function setLogger(LoggerInterface $logger): void
+    {
+        $this->logger = $logger;
+    }
+
+    /**
      * @throws ParserCompilerException
      */
     public function build(LexerBuilderResult $lexer): ParserBuilderResult
     {
+        $this->logger->info('Building a parser out of {rules} rule(s)', [
+            'rules' => $this->rules->count(),
+        ]);
+
         $building = new ParserBuildingContextTransformer()
             ->transform($this);
 
@@ -426,6 +459,10 @@ final class ParserBuilder
             ->transform($building, $lexer);
 
         $this->analyze($result);
+
+        $this->logger->info('The parser of {rules} rule(s) has been built', [
+            'rules' => \count($result->grammar),
+        ]);
 
         return new ParserBuilderResultTransformer()
             ->transform($result);
@@ -437,9 +474,26 @@ final class ParserBuilder
     private function process(ParserBuildingContext $context, LexerBuilderResult $lexer): void
     {
         try {
-            foreach ($this->compilerPasses as $passes) {
+            foreach ($this->compilerPasses as $priority => $passes) {
                 foreach ($passes as $pass) {
+                    $context->logger->debug('Compiler pass {pass} of {priority} priority', [
+                        'pass' => $pass::class,
+                        'priority' => $priority,
+                    ]);
+
+                    $before = \count($context->rules);
+
                     $pass->process($context, $lexer);
+
+                    $after = \count($context->rules);
+
+                    if ($before !== $after) {
+                        $context->logger->info('{pass} has left {after} rule(s) of {before}', [
+                            'pass' => self::printPass($pass),
+                            'before' => $before,
+                            'after' => $after,
+                        ]);
+                    }
                 }
             }
         } catch (ParserCompilerException $e) {
@@ -456,6 +510,10 @@ final class ParserBuilder
     {
         try {
             foreach ($this->analysisPasses as $pass) {
+                $context->logger->debug('Analysis pass {pass}', [
+                    'pass' => $pass::class,
+                ]);
+
                 $pass->process($context);
             }
         } catch (ParserCompilerException $e) {
@@ -463,5 +521,25 @@ final class ParserBuilder
         } catch (\Throwable $e) {
             throw ParserCompilerException::becauseInternalErrorOccurs($e);
         }
+    }
+
+    /**
+     * Returns the name a pass is reported under.
+     *
+     * @return non-empty-string
+     */
+    private static function printPass(ParserCompilerPassInterface $pass): string
+    {
+        $class = $pass::class;
+
+        $offset = \strrpos($class, '\\');
+
+        if ($offset === false) {
+            return $class;
+        }
+
+        $name = \substr($class, $offset + 1);
+
+        return $name === '' ? $class : $name;
     }
 }
