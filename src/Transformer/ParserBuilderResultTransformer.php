@@ -24,9 +24,8 @@ final class ParserBuilderResultTransformer
             kept: $context->kept,
             reducers: $context->reducers,
             constants: $context->constants,
-            entrypoints: $context->entrypoints,
-            choicePrediction: $context->choicePrediction,
             expectations: $context->expectations,
+            choicePrediction: $context->choicePrediction,
             messages: $context->messages,
         );
     }

@@ -61,7 +61,6 @@ final class ParserResultContextTransformer
         $grammar = [];
         $reducers = [];
         $constants = [];
-        $entrypoints = [];
         $messages = [];
 
         foreach ($context->rules as $id => $definition) {
@@ -78,10 +77,6 @@ final class ParserResultContextTransformer
             if ($definition->name !== null) {
                 $constants[$definition->name] = $id;
 
-                if ($definition->isEntrypoint) {
-                    $entrypoints[$definition->name] = $id;
-                }
-
                 $context->logger->debug('Rule {rule} is compiled into the rule #{id}', [
                     'rule' => $definition->name,
                     'id' => $id,
@@ -89,19 +84,11 @@ final class ParserResultContextTransformer
             }
         }
 
-        if ($entrypoints !== []) {
-            $context->logger->info('{count} rule(s) are kept out of the optimization: {rules}', [
-                'count' => \count($entrypoints),
-                'rules' => \implode(', ', \array_keys($entrypoints)),
-            ]);
-        }
-
         return new ParserResultContext(
             grammar: $grammar,
             initial: $identifiers[$initial],
             reducers: $reducers,
             constants: $constants,
-            entrypoints: $entrypoints,
             expectations: $this->createExpectations($lexer),
             messages: $messages,
             logger: $context->logger,

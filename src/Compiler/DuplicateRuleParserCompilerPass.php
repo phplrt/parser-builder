@@ -40,10 +40,6 @@ final class DuplicateRuleParserCompilerPass implements
             $replacements = new RuleReplacements();
 
             foreach ($context->rules as $rule) {
-                if ($context->isEntrypoint($rule)) {
-                    continue;
-                }
-
                 $key = $this->createKey($rule);
 
                 if ($key === null) {
