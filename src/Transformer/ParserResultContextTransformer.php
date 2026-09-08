@@ -78,7 +78,7 @@ final class ParserResultContextTransformer
             if ($definition->name !== null) {
                 $constants[$definition->name] = $id;
 
-                if ($definition !== $initial && $context->isKept($definition)) {
+                if ($definition->isEntrypoint) {
                     $entrypoints[$definition->name] = $id;
                 }
 
@@ -87,6 +87,13 @@ final class ParserResultContextTransformer
                     'id' => $id,
                 ]);
             }
+        }
+
+        if ($entrypoints !== []) {
+            $context->logger->info('{count} rule(s) are kept out of the optimization: {rules}', [
+                'count' => \count($entrypoints),
+                'rules' => \implode(', ', \array_keys($entrypoints)),
+            ]);
         }
 
         return new ParserResultContext(
